@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ArvoLens — See. Track. Grow.</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Sora:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════
+   TOKENS & DESIGN SYSTEM
+═══════════════════════════════════ */
+:root {
+  --navy:       #070F1C;
+  --navy-2:     #0B1628;
+  --navy-3:     #0F1E35;
+  --navy-4:     #162640;
+  --emerald:    #059669;
+  --emerald-l:  #10B981;
+  --emerald-ll: #34D399;
+  --emerald-glow: rgba(5,150,105,0.18);
+  --gold:       #D97706;
+  --gold-l:     #F59E0B;
+  --white:      #F0EDE8;
+  --white-dim:  rgba(240,237,232,0.6);
+  --white-dimmer: rgba(240,237,232,0.35);
+  --white-ghost: rgba(240,237,232,0.08);
+  --border:      rgba(240,237,232,0.08);
+  --border-em:  rgba(5,150,105,0.3);
+  --ff-display: 'Playfair Display', Georgia, serif;
+  --ff-body:    'Sora', sans-serif;
+  --ff-mono:    'DM Mono', monospace;
+}
+
+/* ═══════════════════════════════════
+   RESET + BASE ARCHITECTURE
+═══════════════════════════════════ */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--navy);
+  color: var(--white);
+  font-family: var(--ff-body);
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* NOISE OVERLAY FOR PREMIUM TEXTURE */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.4;
+}
+
+/* ═══════════════════════════════════
+   NAVIGATION BAR
+═══════════════════════════════════ */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 20px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background 0.4s, backdrop-filter 0.4s;
+}
+nav.scrolled {
+  background: rgba(7,15,28,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-logo {
+  font-family: var(--ff-body);
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  color: var(--white);
+}
+.nav-logo span { color: var(--emerald-l); }
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  list-style: none;
+}
+.nav-links a {
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--white-dim);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--white); }
+
+.nav-cta {
+  background: var(--emerald);
+  color: white !important;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  transition: background 0.2s, transform 0.2s !important;
+}
+.nav-cta:hover {
+  background: var(--emerald-l) !important;
+  transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════
+   HERO FRAMEWORK
+═══════════════════════════════════ */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 120px 24px 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 600px;
+  background: radial-gradient(ellipse, rgba(5,150,105,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+  pointer-events: none;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--white-ghost);
+  border: 1px solid var(--border-em);
+  border-radius: 100px;
+  padding: 8px 18px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--emerald-ll);
+  margin-bottom: 32px;
+  animation: fadeUp 0.8s ease both;
+}
+.hero-badge::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--emerald-l);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.4); }
+}
+
+.hero-title {
+  font-family: var(--ff-display);
+  font-size: clamp(44px, 7.5vw, 90px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+  animation: fadeUp 0.8s 0.1s ease both;
+}
+
+.hero-title .line-2 {
+  font-style: italic;
+  color: var(--emerald-l);
+}
+
+.hero-tagline {
+  font-size: clamp(14px, 2vw, 18px);
+  font-weight: 300;
+  color: var(--white-dim);
+  max-width: 600px;
+  margin: 24px auto 48px;
+  letter-spacing: 0.02em;
+  animation: fadeUp 0.8s 0.2s ease both;
+}
+
+.hero-tagline strong {
+  color: var(--white);
+  font-weight: 500;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  animation: fadeUp 0.8s 0.3s ease both;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--emerald);
+  color: white;
+  padding: 16px 32px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  letter-spacing: 0.01em;
+  transition: all 0.25s;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 40px rgba(5,150,105,0.3);
+}
+.btn-primary:hover {
+  background: var(--emerald-l);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 40px rgba(5,150,105,0.4);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  color: var(--white-dim);
+  padding: 16px 28px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 400;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  transition: all 0.25s;
+  cursor: pointer;
+}
+.btn-secondary:hover {
+  color: var(--white);
+  border-color: rgba(240,237,232,0.2);
+  background: var(--white-ghost);
+}
+
+.hero-stats {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  margin-top: 80px;
+  padding-top: 48px;
+  border-top: 1px solid var(--border);
+  animation: fadeUp 0.8s 0.4s ease both;
+}
+.hero-stat { text-align: center; }
+.hero-stat-num {
+  font-family: var(--ff-display);
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1;
+}
+.hero-stat-num span { color: var(--emerald-l); }
+.hero-stat-label {
+  font-size: 12px;
+  color: var(--white-dimmer);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+/* ═══════════════════════════════════
+   SCROLL REVEAL CONFIG
+═══════════════════════════════════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.reveal {
+  opacity: 1; 
+  transform: translateY(0);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+
+section {
+  padding: 120px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--emerald-l);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.section-label::before {
+  content: '';
+  width: 24px; height: 1.5px;
+  background: var(--emerald);
+}
+
+.section-title {
+  font-family: var(--ff-display);
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 20px;
+}
+.section-title em {
+  font-style: italic;
+  color: var(--emerald-l);
+}
+
+.section-sub {
+  font-size: 17px;
+  font-weight: 300;
+  color: var(--white-dim);
+  max-width: 560px;
+  line-height: 1.7;
+}
+
+/* ═══════════════════════════════════
+   PROBLEM SECTION
+═══════════════════════════════════ */
+.problem-section {
+  padding: 100px 24px;
+  background: linear-gradient(180deg, var(--navy) 0%, var(--navy-2) 100%);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.problem-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.problem-pains {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 40px;
+}
+
+.pain-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 24px;
+  background: var(--white-ghost);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: border-color 0.3s;
+}
+.pain-item:hover { border-color: rgba(5,150,105,0.2); }
+
+.pain-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.pain-text strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: var(--white);
+}
+.pain-text span {
+  font-size: 13px;
+  color: var(--white-dimmer);
+  line-height: 1.5;
+}
+
+.solution-panel {
+  background: var(--navy-3);
+  border: 1px solid var(--border-em);
+  border-radius: 20px;
+  padding: 40px;
+  position: relative;
+  overflow: hidden;
+}
+.solution-panel::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(5,150,105,0.15), transparent 70%);
+}
+
+.solution-heading {
+  font-family: var(--ff-display);
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.solution-heading em { color: var(--emerald-l); font-style: italic; }
+
+.solution-items {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.sol-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 14px;
+  color: var(--white-dim);
+}
+.sol-check {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: rgba(5,150,105,0.15);
+  border: 1px solid var(--emerald);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--emerald-l);
+}
+
+/* ═══════════════════════════════════
+   EXTENDED 3x3 APP FEATURES MATRIX (9 FEATURES)
+═══════════════════════════════════ */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 64px;
+}
+
+.feature-card {
+  background: var(--navy-2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 36px 28px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.feature-card:hover { 
+  background: var(--navy-3); 
+  border-color: var(--border-em);
+  transform: translateY(-4px);
+}
+
+.feature-icon {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  background: rgba(5,150,105,0.1);
+  border: 1px solid rgba(5,150,105,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+.feature-tag {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--emerald-l);
+  margin-bottom: 10px;
+}
+
+.feature-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  letter-spacing: -0.01em;
+  color: var(--white);
+}
+
+.feature-desc {
+  font-size: 13px;
+  color: var(--white-dimmer);
+  line-height: 1.65;
+  font-weight: 300;
+}
+
+.feature-card.highlight {
+  background: linear-gradient(135deg, var(--navy-3), var(--navy-4));
+  border: 1px solid var(--border-em);
+}
+
+/* ═══════════════════════════════════
+   HOW IT WORKS FLOW
+═══════════════════════════════════ */
+.how-section {
+  background: var(--navy-2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 120px 24px;
+}
+
+.how-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.steps-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  margin-top: 64px;
+  position: relative;
+}
+
+.steps-row::before {
+  content: '';
+  position: absolute;
+  top: 28px;
+  left: calc(12.5% + 24px);
+  right: calc(12.5% + 24px);
+  height: 1px;
+  background: linear-gradient(90deg, var(--emerald), var(--emerald-l), var(--emerald));
+  opacity: 0.3;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 20px;
+  position: relative;
+}
+
+.step-num {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--navy-3);
+  border: 2px solid var(--emerald);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--ff-mono);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--emerald-l);
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 0 20px rgba(5,150,105,0.2);
+}
+
+.step-emoji { font-size: 22px; }
+.step-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--white); }
+.step-desc { font-size: 13px; color: var(--white-dimmer); line-height: 1.6; }
+
+/* Input Methods */
+.input-methods {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 64px;
+}
+
+.input-card {
+  background: var(--navy-3);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 36px 28px;
+  text-align: center;
+  transition: all 0.3s;
+  cursor: default;
+}
+.input-card:hover {
+  border-color: var(--border-em);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+}
+
+.input-emoji { font-size: 40px; display: block; margin-bottom: 16px; }
+.input-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--white); }
+.input-desc { font-size: 13.5px; color: var(--white-dimmer); line-height: 1.6; }
+
+/* ═══════════════════════════════════
+   MOCK PHONE DETECT SYSTEM
+═══════════════════════════════════ */
+.notif-section {
+  background: var(--navy-2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 100px 24px;
+}
+
+.notif-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.phone-mock {
+  background: var(--navy-3);
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 36px;
+  padding: 24px;
+  max-width: 280px;
+  margin: 0 auto;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 60px rgba(5,150,105,0.1);
+}
+
+.phone-notif {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  animation: notifSlide 3s 1s ease both;
+}
+
+@keyframes notifSlide {
+  0% { opacity: 0; transform: translateY(-10px); }
+  20%, 100% { opacity: 1; transform: translateY(0); }
+}
+
+.notif-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.notif-app-icon {
+  width: 20px; height: 20px;
+  background: var(--emerald);
+  border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+}
+.notif-app-name { font-size: 11px; font-weight: 600; color: var(--white-dim); }
+.notif-time { font-size: 10px; color: var(--white-dimmer); margin-left: auto; }
+.notif-title { font-size: 13px; font-weight: 600; color: var(--white); margin-bottom: 3px; }
+.notif-body { font-size: 12px; color: var(--white-dimmer); }
+.notif-amount { color: var(--emerald-l); font-weight: 600; }
+
+.phone-screen-content { background: var(--navy); border-radius: 12px; padding: 16px; }
+.phone-screen-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-dimmer);
+  margin-bottom: 12px;
+}
+.queue-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.queue-item:last-child { border-bottom: none; }
+.qi-left { display: flex; align-items: center; gap: 8px; }
+.qi-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--emerald); }
+.qi-name { color: var(--white-dim); }
+.qi-amt { color: var(--emerald-l); font-weight: 600; font-family: var(--ff-mono); }
+
+/* ═══════════════════════════════════
+   4-TIER FREEMIUM PRICING HUBS ARCHITECTURE
+═══════════════════════════════════ */
+.pricing-4tier-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-top: 48px;
+  align-items: stretch;
+}
+
+.price-card-v2 {
+  background: var(--navy-2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  transition: all 0.3s ease;
+}
+.price-card-v2:hover {
+  transform: translateY(-4px);
+  border-color: rgba(240,237,232,0.15);
+}
+
+/* Premium Highlight State (Pro Tier) */
+.price-card-v2.pro-featured {
+  border: 2px solid var(--emerald);
+  background: linear-gradient(145deg, var(--navy-2) 0%, var(--navy-3) 100%);
+  box-shadow: 0 20px 45px rgba(5,150,105,0.15);
+}
+.pro-badge {
+  position: absolute;
+  top: 0; right: 24px;
+  transform: translateY(-50%);
+  background: var(--emerald);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 6px 14px;
+  border-radius: 100px;
+}
+
+/* Business Premium State (Full Dark Accent) */
+.price-card-v2.biz-dark {
+  background: #0d121f;
+  border-color: var(--navy-4);
+}
+
+.tier-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+.tier-sub {
+  font-size: 12px;
+  color: var(--white-dimmer);
+  margin-bottom: 24px;
+}
+.tier-price-block {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 20px;
+}
+.tier-currency { font-family: var(--ff-display); font-size: 24px; font-weight: 700; color: var(--white); }
+.tier-price { font-family: var(--ff-display); font-size: 40px; font-weight: 800; color: var(--white); tracking-tight: -0.02em; }
+.tier-price-block.emerald-price .tier-price, .tier-price-block.emerald-price .tier-currency { color: var(--emerald-l); }
+.tier-cycle { font-size: 13px; color: var(--white-dimmer); margin-left: 4px; font-weight: 300; }
+
+.tier-features-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 36px;
+}
+.tier-feat-item {
+  font-size: 12.5px;
+  color: var(--white-dim);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.4;
+}
+.tier-feat-item.disabled {
+  color: var(--white-dimmer);
+  opacity: 0.4;
+}
+.tier-check { color: var(--emerald-l); font-weight: bold; flex-shrink: 0; }
+.tier-cross { color: #EF4444; font-weight: bold; flex-shrink: 0; padding-left: 2px; }
+
+.tier-btn {
+  width: 100%;
+  text-align: center;
+  padding: 14px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.25s;
+  display: block;
+}
+.btn-starter { background: var(--white-ghost); color: var(--white); border: 1px solid var(--border); }
+.btn-starter:hover { background: rgba(255,255,255,0.06); }
+.btn-basic { background: transparent; color: var(--white); border: 1px solid rgba(240,237,232,0.2); }
+.btn-basic:hover { background: var(--white-ghost); border-color: var(--white); }
+.btn-pro { background: var(--emerald); color: white; border: none; box-shadow: 0 4px 20px rgba(5,150,105,0.2); }
+.btn-pro:hover { background: var(--emerald-l); transform: translateY(-1px); }
+.btn-biz { background: var(--navy-4); color: var(--white); border: 1px solid rgba(255,255,255,0.05); }
+.btn-biz:hover { background: rgba(255,255,255,0.1); }
+
+/* ═══════════════════════════════════
+   WAITLIST LEAD FORM SECTION
+═══════════════════════════════════ */
+.waitlist-section {
+  text-align: center;
+  padding: 140px 24px;
+  position: relative;
+  overflow: hidden;
+}
+.waitlist-section::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 900px; height: 600px;
+  background: radial-gradient(ellipse, rgba(5,150,105,0.08) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.waitlist-inner { max-width: 600px; margin: 0 auto; position: relative; }
+.waitlist-title { font-family: var(--ff-display); font-size: clamp(36px, 6vw, 64px); font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 20px; }
+.waitlist-title em { color: var(--emerald-l); font-style: italic; }
+.waitlist-sub { font-size: 16px; color: var(--white-dim); margin-bottom: 48px; font-weight: 300; line-height: 1.7; }
+
+.waitlist-form-block {
+  background: var(--navy-2);
+  border: 1px solid var(--border);
+  padding: 32px;
+  border-radius: 20px;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+}
+.waitlist-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 420px;
+  margin: 0 auto;
+}
+.waitlist-input {
+  width: 100%;
+  background: var(--navy-3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  font-family: var(--ff-body);
+  font-size: 14px;
+  color: var(--white);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.waitlist-input::placeholder { color: var(--white-dimmer); }
+.waitlist-input:focus { border-color: var(--emerald); box-shadow: 0 0 12px rgba(5,150,105,0.2); }
+.waitlist-note { font-size: 12px; color: var(--white-dimmer); letter-spacing: 0.03em; margin-top: 16px; }
+
+.success-state-box {
+  display: none;
+  text-align: center;
+  padding: 20px 0;
+}
+.success-icon {
+  font-size: 48px;
+  color: var(--emerald-l);
+  margin-bottom: 16px;
+  animation: scaleUp 0.4s ease both;
+}
+@keyframes scaleUp { from {transform: scale(0.8); opacity:0;} to {transform: scale(1); opacity:1;} }
+
+/* FOOTER ARCHITECTURE */
+footer { border-top: 1px solid var(--border); padding: 48px 24px; max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
+.footer-logo { font-family: var(--ff-body); font-weight: 700; font-size: 18px; color: var(--white-dim); }
+.footer-logo span { color: var(--emerald-l); }
+.footer-links { display: flex; gap: 32px; list-style: none; flex-wrap: wrap; }
+.footer-links a { font-size: 13px; color: var(--white-dimmer); text-decoration: none; transition: color 0.2s; }
+.footer-links a:hover { color: var(--white); }
+.footer-copy { font-size: 12px; color: var(--white-dimmer); }
+
+/* MARQUEE STRIP STYLING */
+.marquee-wrap { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--navy-2); padding: 16px 0; overflow: hidden; }
+.marquee-track { display: flex; gap: 0; animation: marquee 20s linear infinite; white-space: nowrap; }
+.marquee-item { display: inline-flex; align-items: center; gap: 12px; padding: 0 32px; font-size: 13px; color: var(--white-dimmer); letter-spacing: 0.05em; }
+.marquee-item::before { content: '◆'; color: var(--emerald); font-size: 8px; }
+@keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+.float-tag { display: inline-flex; align-items: center; gap: 6px; background: var(--white-ghost); border: 1px solid var(--border); border-radius: 100px; padding: 5px 12px; font-size: 11px; color: var(--white-dimmer); font-family: var(--ff-mono); }
+
+/* ═══════════════════════════════════
+   RESPONSIVE DESIGN BREAKPOINTS
+═══════════════════════════════════ */
+@media (max-width: 1100px) {
+  .pricing-4tier-grid { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+  .features-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 900px) {
+  nav { padding: 16px 24px; }
+  .nav-links { display: none; }
+  .problem-inner { grid-template-columns: 1fr; gap: 40px; }
+  .steps-row { grid-template-columns: 1fr 1fr; gap: 32px; }
+  .steps-row::before { display: none; }
+  .input-methods { grid-template-columns: 1fr; }
+  .notif-inner { grid-template-columns: 1fr; gap: 40px; }
+  .hero-stats { gap: 24px; flex-wrap: wrap; justify-content: center; }
+  footer { flex-direction: column; text-align: center; }
+  .footer-links { justify-content: center; }
+}
+@media (max-width: 650px) { 
+  .pricing-4tier-grid { grid-template-columns: 1fr; } 
+  .features-grid { grid-template-columns: 1fr; }
+  .steps-row { grid-template-columns: 1fr; } 
+  .hero-stats { gap: 20px; } 
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ NAV BAR ═══ -->
+<nav id="navbar">
+  <a href="#" class="nav-logo">Arvo<span>Lens</span></a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#waitlist" class="nav-cta">Join Waitlist</a></li>
+  </ul>
+</nav>
+
+<!-- ═══ HERO BLOCK ═══ -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-badge">🇮🇳 Made for India &nbsp;·&nbsp; Coming Soon</div>
+
+  <h1 class="hero-title">
+    <div>Kharcha dekho.</div>
+    <div class="line-2">Saaf saaf.</div>
+  </h1>
+
+  <p class="hero-tagline">
+    <strong>ArvoLens</strong> — India's automated on-device expense cabinet.
+    Scan receipts, speak financial logs, auto-detect universal bank SMS alerts.
+    <strong>Zero cloud leakage. Complete visibility.</strong>
+  </p>
+
+  <div class="hero-actions">
+    <a href="#waitlist" class="btn-primary">🚀 Join the Waitlist</a>
+    <a href="#features" class="btn-secondary">See Features →</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="hero-stat-num">3<span>x</span></div>
+      <div class="hero-stat-label">Faster than manual log</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-num">100<span>%</span></div>
+      <div class="hero-stat-label">Local Data Guard</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-num">0</div>
+      <div class="hero-stat-label">Manual Typing Needed</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-num">CA<span>✓</span></div>
+      <div class="hero-stat-label">One-Tap Reports</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ MARQUEE RUNNING STRIP ═══ -->
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <span class="marquee-item">Universal SMS Parser</span>
+    <span class="marquee-item">Voice Input Engine</span>
+    <span class="marquee-item">Confidence AI Router</span>
+    <span class="marquee-item">Double-Hybrid Scanner</span>
+    <span class="marquee-item">GST-Ready Accounting</span>
+    <span class="marquee-item">CA Validation Logs</span>
+    <span class="marquee-item">Bank Statement Import</span>
+    <span class="marquee-item">WhatsApp Direct Share</span>
+    <span class="marquee-item">Biometric Privacy Guard</span>
+    <span class="marquee-item">Offline First Framework</span>
+    <!-- Loop Duplicates -->
+    <span class="marquee-item">Universal SMS Parser</span>
+    <span class="marquee-item">Voice Input Engine</span>
+    <span class="marquee-item">Confidence AI Router</span>
+    <span class="marquee-item">Double-Hybrid Scanner</span>
+    <span class="marquee-item">GST-Ready Accounting</span>
+    <span class="marquee-item">CA Validation Logs</span>
+    <span class="marquee-item">Bank Statement Import</span>
+    <span class="marquee-item">WhatsApp Direct Share</span>
+    <span class="marquee-item">Biometric Privacy Guard</span>
+    <span class="marquee-item">Offline First Framework</span>
+  </div>
+</div>
+
+<!-- ═══ PROBLEM VS SOLUTION ═══ -->
+<div class="problem-section">
+  <div class="problem-inner">
+    <div>
+      <div class="section-label reveal">The Problem</div>
+      <h2 class="section-title reveal reveal-delay-1">Expense tracking <em>is broken.</em></h2>
+      <p class="section-sub reveal reveal-delay-2">Every Indian freelancer, consultant, and business owner faces this data headache monthly.</p>
+
+      <div class="problem-pains">
+        <div class="pain-item reveal reveal-delay-1">
+          <div class="pain-icon">📄</div>
+          <div class="pain-text">
+            <strong>Receipts pile up — then disappear</strong>
+            <span>Month end aata hai aur physical bills khone lagte hain. Tax input claims miss ho jaate hain.</span>
+          </div>
+        </div>
+        <div class="pain-item reveal reveal-delay-2">
+          <div class="pain-icon">⌨️</div>
+          <div class="pain-text">
+            <strong>Manual entry — completely boring</strong>
+            <span>Roz dukan par payment ke baad manual entry karne mein aalas aata hai. Data log chhoot jata hai.</span>
+          </div>
+        </div>
+        <div class="pain-item reveal reveal-delay-3">
+          <div class="pain-icon">😰</div>
+          <div class="pain-text">
+            <strong>Tax compliance nightmare</strong>
+            <span>GST summary, ITR records, CA coordination — data organized nahi hota toh hours waste hote hain.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="solution-panel reveal">
+      <div class="section-label" style="justify-content:flex-start;">The ArvoLens Way</div>
+      <div class="solution-heading">Ab <em>kuch nahi</em> karna manually.</div>
+      <p style="font-size:14px; color:var(--white-dimmer); margin-top:12px; line-height:1.7;">Scan karo, bolo, ya bas background chalne do — ArvoLens automatic drafts ready rakhega.</p>
+
+      <div class="solution-items">
+        <div class="sol-item"><div class="sol-check">✓</div>Universal Financial SMS Parser (UPI/Cards/NEFT)</div>
+        <div class="sol-item"><div class="sol-check">✓</div>Confidence-Based Local Voice Engine</div>
+        <div class="sol-item"><div class="sol-check">✓</div>Double-Hybrid Bill Scanning Router</div>
+        <div class="sol-item"><div class="sol-check">✓</div>Month end → CA-Ready layout download in 1 tap</div>
+        <div class="sol-item"><div class="sol-check">✓</div>WhatsApp & Excel direct sync infrastructure</div>
+        <div class="sol-item"><div class="sol-check">✓</div>Biometric Lock — 100% On-device sandbox security</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ APP FEATURES GRID (UPGRADED TO 9 DEEP CORE FEATURES) ═══ -->
+<section id="features">
+  <div class="section-label reveal">Features Architecture</div>
+  <h2 class="section-title reveal reveal-delay-1">Everything you need.<br><em>Nothing you don't.</em></h2>
+  <p class="section-sub reveal reveal-delay-2">Built ground-up for high-speed financial engineering — local analytics, smart categories, complete token optimization.</p>
+
+  <div class="features-grid reveal">
+    <!-- Card 1: Universal SMS Parser -->
+    <div class="feature-card highlight">
+      <div class="feature-icon">💬</div>
+      <div class="feature-tag">Core Engine</div>
+      <div class="feature-title">Universal SMS Parser</div>
+      <div class="feature-desc">Not just UPI! GPay, Debit Cards swipe, ya Net Banking NEFT/IMPS transfer—jaise hi phone par official "Debited" alert aayega, local regex use instant catch kar lega. ₹0 server cost.</div>
+    </div>
+
+    <!-- Card 2: Confidence Voice Engine -->
+    <div class="feature-card">
+      <div class="feature-icon">🎤</div>
+      <div class="feature-tag">Voice Logging</div>
+      <div class="feature-title">Confidence-Based Voice Engine</div>
+      <div class="feature-desc">"Chai 20 cash" jaise 70% simple logs local regex processor se phone par hi parse honge. Jab conversation complex hoga, tabhi secure cloud fallback query trigger hogi. High speed, low token footprint.</div>
+    </div>
+
+    <!-- Card 3: Double Hybrid Image Router -->
+    <div class="feature-card">
+      <div class="feature-icon">📸</div>
+      <div class="feature-tag">Computer Vision</div>
+      <div class="feature-title">Double-Hybrid Image Router</div>
+      <div class="feature-desc">Camera se bills click karte hi automatic logic system chalta hai. Choti receipts aur retail slips saste Flash-Lite model par check hoti hain, aur badi multi-page tax invoices standard engine par.</div>
+    </div>
+
+    <!-- Card 4: Universal Cabinet UI -->
+    <div class="feature-card">
+      <div class="feature-icon">🗂️</div>
+      <div class="feature-tag">UI Showcase</div>
+      <div class="feature-title">Universal Cabinet UI</div>
+      <div class="feature-desc">Sare financial transactions aur dynamic drafts horizontal category filter chips ke sath beautifully structured rehte hain. Ek single swipe mein accept ya delete tracking controls.</div>
+    </div>
+
+    <!-- Card 5: Smart Folders -->
+    <div class="feature-card">
+      <div class="feature-icon">📁</div>
+      <div class="feature-tag">AI Categorization</div>
+      <div class="feature-title">AI Smart Folders</div>
+      <div class="feature-desc">Aapke vendors aur expenses automatic projects ya cost centers mein groups ho jate hain. Food, Fuel, Travel ke alawa freelancers ke liye business projects segmentation auto-mapped.</div>
+    </div>
+
+    <!-- Card 6: CA-Ready Analytics -->
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <div class="feature-tag">Accounting</div>
+      <div class="feature-title">CA-Ready Report Exports</div>
+      <div class="feature-desc">Direct compliance frameworks execution. Single tap mein transparent structured reports PDF ya raw Excel datasets format mein download karke directly WhatsApp par accountant ko forward karein.</div>
+    </div>
+
+    <!-- Card 7: GST Ledger Module -->
+    <div class="feature-card">
+      <div class="feature-icon">🧾</div>
+      <div class="feature-tag">Taxation</div>
+      <div class="feature-title">GST Segregation Module</div>
+      <div class="feature-desc">Bade bills aur standard layouts mein se system automatic CGST, SGST, IGST input brackets aur components ko pull out karke tax-deductible dashboard mapping ready karta hai.</div>
+    </div>
+
+    <!-- Card 8: Bank Statement Parser -->
+    <div class="feature-card">
+      <div class="feature-icon">🏦</div>
+      <div class="feature-tag">Data Import</div>
+      <div class="feature-title">Bank Statement Parser</div>
+      <div class="feature-desc">Official bank balance statements ke long PDF records ya CSV documents upload karein. Core file processing structure data patterns ko seamlessly extract karke transaction sheet sync kar deta hai.</div>
+    </div>
+
+    <!-- Card 9: Biometric Native Vault -->
+    <div class="feature-card">
+      <div class="feature-icon">🔒</div>
+      <div class="feature-tag">Privacy Guard</div>
+      <div class="feature-title">Biometric Native Vault</div>
+      <div class="feature-desc">System fingerprint scanner aur face ID credentials se structural level locked local sandboxed system. Aapka accounting data network cloud server se door device ledger memory mein isolated rehta hai.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ HOW IT WORKS ═══ -->
+<div class="how-section" id="how">
+  <div class="how-inner">
+    <div class="section-label reveal">How It Works</div>
+    <h2 class="section-title reveal reveal-delay-1">3 seconds se kam mein.<br><em>Seriously.</em></h2>
+
+    <div class="steps-row">
+      <div class="step reveal">
+        <div class="step-num"><span class="step-emoji">📸</span></div>
+        <div class="step-title">Capture</div>
+        <div class="step-desc">Invoice photo click karein, voice log dein, ya bank transaction text notifications background mein catch hone dein.</div>
+      </div>
+      <div class="step reveal reveal-delay-1">
+        <div class="step-num"><span class="step-emoji">🧠</span></div>
+        <div class="step-title">Local Match / AI Route</div>
+        <div class="step-desc">Regex engine checks instant pass karta hai. Complex prompts ya data sets criteria automatic correct AI endpoints par load hote hain.</div>
+      </div>
+      <div class="step reveal reveal-delay-2">
+        <div class="step-num"><span class="step-emoji">✅</span></div>
+        <div class="step-title">Review Screen</div>
+        <div class="step-desc">System notification push bars trigger hote hain. Single link touch mein temporary drafts dynamic review screen verify ho jayegi.</div>
+      </div>
+      <div class="step reveal reveal-delay-3">
+        <div class="step-num"><span class="step-emoji">📊</span></div>
+        <div class="step-title">Insight Cabinet</div>
+        <div class="step-desc">Data sets devices repositories memory tables (SQLite) mein lock ho jate hain. Real-time graphs aur export summaries structural ready.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ NOTIFICATION MOCK LIVE SYSTEM ═══ -->
+<div class="notif-section">
+  <div class="notif-inner">
+    <div>
+      <div class="section-label reveal">Auto-Detection</div>
+      <h2 class="section-title reveal reveal-delay-1">Alerts Aaya?<br><em>ArvoLens ne note kiya.</em></h2>
+      <p class="section-sub reveal reveal-delay-2">HDFC, ICICI, SBI ya any bank debit warnings aur UPI text alerts aate hi background queue receiver automatic data map kar leta hai. App killed state mein ho tab bhi perfect execution.</p>
+
+      <div style="margin-top: 36px; display: flex; flex-direction: column; gap: 16px;">
+        <div class="sol-item reveal"><div class="sol-check">✓</div>Killed state transaction listener background architecture</div>
+        <div class="sol-item reveal reveal-delay-1"><div class="sol-check">✓</div>Smart financial keywords pattern matches ("Debited", "Paid")</div>
+        <div class="sol-item reveal reveal-delay-2"><div class="sol-check">✓</div>Instant top bar alert configuration trays for quick edits</div>
+        <div class="sol-item reveal reveal-delay-3"><div class="sol-check">✓</div>100% Secure offline script parsing. No network leak layers</div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <div class="phone-mock">
+        <div class="phone-notif">
+          <div class="notif-header">
+            <div class="notif-app-icon" style="color: white; font-weight: 700;">A</div>
+            <div class="notif-app-name">ArvoLens</div>
+            <div class="notif-time">just now</div>
+          </div>
+          <div class="notif-title">New expense detected 🧾</div>
+          <div class="notif-body"><span class="notif-amount">₹350</span> via Bank Alert · Swiggy · Tap to confirm draft</div>
+        </div>
+
+        <div class="phone-screen-content">
+          <div class="phone-screen-title">Draft Queue (Active)</div>
+          <div class="queue-item">
+            <div class="qi-left"><div class="qi-dot"></div><div class="qi-name">Swiggy · Food</div></div>
+            <div class="qi-amt">₹350</div>
+          </div>
+          <div class="queue-item">
+            <div class="qi-left"><div class="qi-dot" style="background:#D97706"></div><div class="qi-name">Uber · Transport</div></div>
+            <div class="qi-amt">₹220</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PRICING MATRIX (UPDATED TO 4-TIER FREEMIUM SAAS GRID) ═══ -->
+<section id="pricing">
+  <div class="section-label reveal">Pricing Matrix</div>
+  <h2 class="section-title reveal reveal-delay-1">Simple plans for everyone.<br><em>Built to scale.</em></h2>
+  <p class="section-sub reveal reveal-delay-2" style="margin-bottom: 24px;">Start with our lifetime-free universal tracking hook, upgrade seamlessly as your business analytics needs grow.</p>
+
+  <div class="pricing-4tier-grid reveal">
+    
+    <!-- Tier 1: Starter (Free) -->
+    <div class="price-card-v2">
+      <div>
+        <h3 class="tier-title">Starter</h3>
+        <p class="tier-sub">Perfect for testing core automation</p>
+        <div class="tier-price-block">
+          <span class="tier-currency">₹</span>
+          <span class="tier-price">0</span>
+          <span class="tier-cycle">/ forever</span>
+        </div>
+        <ul class="tier-features-list">
+          <li class="tier-feat-item"><span class="tier-check">✓</span> <strong>Unlimited</strong> SMS Tracker (UPI/NEFT/IMPS)</li>
+          <li class="tier-feat-item"><span class="tier-check">✓</span> Unlimited Manual Entries</li>
+          <li class="tier-feat-item"><span class="tier-check">✓</span> <strong>20 Voice Logs</strong> / Month (AI Router)</li>
+          <li class="tier-feat-item"><span class="tier-check">✓</span> 3 One-Time Trial Bill Scans</li>
+          <li class="tier-feat-item"><span class="tier-check">✓</span> Local Biometric Security</li>
+          <li class="tier-feat-item disabled"><span class="tier-cross">✗</span> Custom Expense Categories</li>
+          <li class="tier-feat-item disabled"><span class="tier-cross">✗</span> PDF & Excel Financial Exports</li>
+          <li class="tier-feat-item" style="color:var(--emerald-ll); font-size:11px; margin-top:8px;">• Supported by Non-Intrusive Ads</li>
+        </ul>
+      </div>
+      <a href="#waitlist" class="tier-btn btn-starter">Get Started</a>
+    </div>
+
+    <!-- Tier 2: Basic (Salaried) -->
+    <div class="price-card-v2">
+      <div>
+        <h3 class="tier-title">Basic</h3>
+        <p class="tier-sub">For salaried individuals & professionals</p>
+        <div class="tier-price-block">
+          <span class="tier-currency">₹</span>
+          <span class="tier-price">49</span>
+          <span class="tier-cycle">/ month</span>
+        </div>
+        <ul class="tier-features-list">
+          <li class="tier-feat-item"><span class="tier-check">✓</span> <strong>Everything in Free Plan</strong></li>
+          <li class="tier-feat-item"><span class="tier-check">✓</span> <strong>60 Voice Logs</strong> / Month</li>
+          <li class="tier-feat-item"><span class="tier-check">✓</span> 30 High-Accuracy Bill Scans / mo</li>
+          <li class="tier-feat-item"><span class="tier-check">✓</span> Default + 5 Custom Categories</li>
+          <li class="tier-feat-item"><span class="tier-check">✓</span> <strong>Unlimited PDF & WA Exports</strong></li>
+          <li class="tier-feat-item"><span class="tier-check">✓</span> 3 AI Smart Folders</li>
+          <li class="tier-feat-item disabled"><span class="tier-cross">✗</span> Excel Sheets Data Exports</li>
+          <li class="tier-feat-item font-semibold" style="color:var(--emerald-l); font-size:11px;">✓ 100% Ads-Free Experience</li>
+        </ul>
+      </div>
+      <a href="#waitlist" class="tier-btn btn-basic">Select Basic</a>
+    </div>
+
+    <!-- Tier 3: Pro (Hustler - MOST POPULAR) -->
+    <div class="price-card-v2 pro-featured">
+      <div class="pro-badge">Most Popular</div>
+      <div>
+        <h3 class="tier-title">Pro Suite</h3>
+        <p class="tier-sub">For independent contractors & freelancers</p>
+        <div class="tier-price-block emerald-price">
+          <span class="tier-currency">₹</span>
+          <span class="tier-price">99</span>
+          <span class="tier-cycle">/ month</span>
+        </div>
+        <ul class="tier-features-list">
+          <li class="tier-feat-item"><span class="tier-check">✓</span> Everything in Basic Access</li>
+          <li class="tier-feat-item font-bold" style="color:white;"><span class="tier-check">✓</span> Unlimited Voice Input Logs</li>
+          <li class="tier-feat-item"><span class="tier-check">✓</span> 100 High-Accuracy Invoices Scans / mo</li>
+          <li class="tier-feat-item"><span class="tier-check">✓</span> Unlimited Custom Categories Creation</li>
+          <li class="tier-feat-item font-semibold" style="color:white;"><span class="tier-check">✓</span> Unlimited Raw Excel Sheet Export</li>
+          <li class="tier-feat-item"><span class="tier-check">✓</span> <strong>CA-Ready Document Layouts</strong></li>
+          <li class="tier-feat-item"><span class="tier-check">✓</span> Secure Cloud Backup (2 Devices Sync)</li>
+          <li class="tier-feat-item"><span class="tier-check">✓</span> Advanced Historical Time Filters</li>
+        </ul>
+      </div>
+      <a href="#waitlist" class="tier-btn btn-pro">Go Pro Engine</a>
+    </div>
+
+    <!-- Tier 4: Business (Enterprise/CA) -->
+    <div class="price-card-v2 biz-dark">
+      <div>
+        <h3 class="tier-title" style="color:var(--emerald-ll);">Business</h3>
+        <p class="tier-sub">For corporate managers, firms, & CAs</p>
+        <div class="tier-price-block">
+          <span class="tier-currency">₹</span>
+          <span class="tier-price">199</span>
+          <span class="tier-cycle">/ month</span>
+        </div>
+        <ul class="tier-features-list">
+          <li class="tier-feat-item" style="color:white;"><span class="tier-check">✓</span> <strong>100% Unlimited</strong> AI Image Scans</li>
+          <li class="tier-feat-item" style="color:white;"><span class="tier-check">✓</span> <strong>100% Unlimited</strong> Voice Extractions</li>
+          <li class="tier-feat-item"><span class="tier-check">✓</span> <strong>Advanced GST Auditing Categories</strong></li>
+          <li class="tier-feat-item font-bold" style="color:var(--emerald-ll);"><span class="tier-check">✓</span> Bank Statements PDF/CSV Imports</li>
+          <li class="tier-feat-item"><span class="tier-check">✓</span> Recurring Over-spending System Detection</li>
+          <li class="tier-feat-item"><span class="tier-check">✓</span> Complete Multi-Device Cloud Sync (5 Devices)</li>
+          <li class="tier-feat-item"><span class="tier-check">✓</span> Priority Email & Dedicated Chat Support</li>
+          <li class="tier-feat-item"><span class="tier-check">✓</span> Early Access to New Model Nodes</li>
+        </ul>
+      </div>
+      <a href="#waitlist" class="tier-btn btn-biz">Deploy Business</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══ WAITLIST CONVERSION LEAD CORE ═══ -->
+<div class="waitlist-section" id="waitlist">
+  <div class="waitlist-inner">
+    <div class="section-label reveal" style="justify-content:center; margin-bottom:24px;">Early Access Registration</div>
+    <h2 class="waitlist-title reveal">Pehle launch pe<br><em>sab se pehle</em> pao.</h2>
+    <p class="waitlist-sub reveal">Join our founders circle. Launch ke din system confirmation download links direct inbox mein aur special premium privileges free milenge. 🎁</p>
+
+    <div class="waitlist-form-block reveal">
+      <div id="form-container">
+        <form class="waitlist-form" id="coreLeadForm" onsubmit="processForm(event)">
+          <input type="text" id="leadName" class="waitlist-input" placeholder="Aapka Naam (Your Name)" required autocomplete="name" />
+          <input type="email" id="leadEmail" class="waitlist-input" placeholder="Aapka Email (your@email.com)" required autocomplete="email" />
+          <button type="submit" id="submitBtn" class="btn-primary" style="justify-content: center; width: 100%;">Secure My Premium Slot →</button>
+        </form>
+      </div>
+
+      <div id="success-container" class="success-state-box">
+        <div class="success-icon">✓</div>
+        <h3 style="font-family: var(--ff-display); font-size: 24px; color: white; margin-bottom: 8px;">Aap List Mein Shamil Ho Gaye, Chief! 🎉</h3>
+        <p style="font-size: 14px; color: var(--white-dim);">Humne aapka premium early-access slot block kar diya hai. Data live Google Sheet mein secure ho chuka hai.</p>
+      </div>
+    </div>
+
+    <p class="waitlist-note reveal">🔒 Zero Data Leakage Risk. System data updates updates exclusively inside localized network logs.</p>
+
+    <div style="margin-top: 48px; display:flex; gap:16px; justify-content:center; flex-wrap:wrap;" class="reveal">
+      <div class="float-tag">🤖 Android Native Core</div>
+      <div class="float-tag">🇮🇳 Made in India Initiative</div>
+      <div class="float-tag">🔒 Biometric Security Guard</div>
+      <div class="float-tag">⚡ 100% Offline Database</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FOOTER ARCHITECTURE ═══ -->
+<footer>
+  <div class="footer-logo">Arvo<span>Lens</span></div>
+  <ul class="footer-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#waitlist">Waitlist</a></li>
+  </ul>
+  <div class="footer-copy">© 2026 ArvoLens AI · See. Track. Grow.</div>
+</footer>
+
+<script>
+// 👑 LIVE GOOGLE SHEET WEBHOOK CONNECTION GATEWAY
+const GOOGLE_SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyV2cvQlOeynqrvGR9aW0FTszA3K5ni4NCf0fk7OC0cu8bhWlKvwry6sKgJQQMOdThX/exec";
+
+const navElement = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navElement.classList.toggle('scrolled', window.scrollY > 40);
+});
+
+const revealElements = document.querySelectorAll('.reveal');
+const visualObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
+
+revealElements.forEach(el => visualObserver.observe(el));
+
+async function processForm(event) {
+  event.preventDefault();
+  
+  const clientName = document.getElementById('leadName').value.trim();
+  const clientEmail = document.getElementById('leadEmail').value.trim();
+  const emailField = document.getElementById('leadEmail');
+  const btn = document.getElementById('submitBtn');
+
+  if (!clientEmail || !clientEmail.includes('@')) {
+    emailField.style.borderColor = '#EF4444';
+    setTimeout(() => { emailField.style.borderColor = ''; }, 2000);
+    return;
+  }
+
+  btn.innerText = "Processing Slot...";
+  btn.disabled = true;
+
+  if (GOOGLE_SHEET_WEBHOOK_URL === "PASTE_YOUR_WEB_APP_URL_HERE") {
+    console.log("Local Test Active - Data:", { name: clientName, email: clientEmail });
+    document.getElementById('form-container').style.display = 'none';
+    document.getElementById('success-container').style.display = 'block';
+    return;
+  }
+
+  try {
+    const response = await fetch(GOOGLE_SHEET_WEBHOOK_URL, {
+      method: 'POST',
+      mode: 'no-cors', 
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: clientName, email: clientEmail })
+    });
+
+    document.getElementById('form-container').style.display = 'none';
+    document.getElementById('success-container').style.display = 'block';
+  } catch (error) {
+    console.error("Google Sheet Logging Failed:", error);
+    btn.innerText = "Error! Try Again";
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
