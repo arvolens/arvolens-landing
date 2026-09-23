@@ -14,8 +14,6 @@
   --emerald:    #059669;
   --emerald-l:  #10B981;
   --emerald-ll: #34D399;
-  --gold:       #D97706;
-  --gold-l:     #F59E0B;
   --white:      #F0EDE8;
   --white-dim:  rgba(240,237,232,0.6);
   --white-dimmer: rgba(240,237,232,0.35);
@@ -212,23 +210,20 @@ section { padding: 120px 24px; max-width: 1200px; margin: 0 auto; }
 
 /* PRICING */
 .pricing-flat-wrap { max-width: 960px; margin: 56px auto 0; }
-.plans-flat { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 28px; }
+.plans-flat { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 28px; max-width: 720px; margin-left: auto; margin-right: auto; }
 .plan-flat { background: var(--navy-2); border: 1px solid var(--border); border-radius: 20px; padding: 32px 28px; display: flex; flex-direction: column; transition: transform 0.3s, border-color 0.3s; position: relative; }
 .plan-flat:hover { transform: translateY(-4px); border-color: rgba(5,150,105,0.25); }
 .plan-flat.plan-popular { background: linear-gradient(135deg, rgba(5,150,105,0.1), rgba(5,150,105,0.03)); border-color: var(--border-em); transform: scale(1.04); }
 .plan-flat.plan-popular:hover { transform: scale(1.04) translateY(-4px); }
-.plan-flat.plan-lifetime { background: linear-gradient(135deg, rgba(217,119,6,0.08), rgba(217,119,6,0.02)); border-color: rgba(217,119,6,0.25); }
 .popular-badge { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: var(--emerald); color: #fff; font-size: 10px; font-weight: 700; padding: 5px 18px; border-radius: 100px; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; }
 .plan-name { font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--white-dimmer); margin-bottom: 20px; }
 .plan-price-block { margin-bottom: 6px; line-height: 1; }
 .plan-currency { font-size: 22px; font-weight: 700; color: var(--white); vertical-align: top; margin-top: 8px; display: inline-block; }
 .plan-amount { font-size: 52px; font-weight: 800; letter-spacing: -0.03em; color: var(--white); }
 .plan-amount.emerald { color: var(--emerald-l); }
-.plan-amount.gold { color: var(--gold-l); }
 .plan-cycle { font-size: 14px; color: var(--white-dimmer); font-weight: 300; }
 .plan-original { font-size: 13px; color: var(--white-dimmer); text-decoration: line-through; margin-bottom: 4px; }
 .plan-saving { display: inline-flex; align-items: center; gap: 6px; background: rgba(5,150,105,0.12); border: 1px solid rgba(5,150,105,0.25); border-radius: 100px; padding: 3px 10px; font-size: 11px; font-weight: 600; color: var(--emerald-ll); margin-bottom: 4px; }
-.plan-saving.gold-save { background: rgba(217,119,6,0.12); border-color: rgba(217,119,6,0.25); color: var(--gold-l); }
 .plan-period { font-size: 12px; color: var(--white-dimmer); margin-bottom: 24px; }
 .plan-divider { height: 1px; background: var(--border); margin-bottom: 20px; }
 .plan-feats-flat { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; flex: 1; }
@@ -239,8 +234,6 @@ section { padding: 120px 24px; max-width: 1200px; margin: 0 auto; }
 .cta-monthly:hover { border-color: rgba(240,237,232,0.25); color: var(--white); background: var(--white-ghost); }
 .cta-yearly { background: var(--emerald); color: #fff; box-shadow: 0 4px 20px rgba(5,150,105,0.25); }
 .cta-yearly:hover { background: var(--emerald-l); transform: translateY(-1px); }
-.cta-lifetime { background: rgba(217,119,6,0.15); color: var(--gold-l); border: 1px solid rgba(217,119,6,0.3); }
-.cta-lifetime:hover { background: rgba(217,119,6,0.25); transform: translateY(-1px); }
 .free-tier-note { background: var(--white-ghost); border: 1px solid var(--border); border-radius: 14px; padding: 20px 28px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
 .ftn-icon { font-size: 28px; flex-shrink: 0; }
 .ftn-title { font-size: 15px; font-weight: 600; color: var(--white); margin-bottom: 4px; }
@@ -298,7 +291,6 @@ footer { border-top: 1px solid var(--border); padding: 48px 24px; max-width: 120
 
 /* RESPONSIVE */
 @media (max-width: 1100px) {
-  .plans-flat { grid-template-columns: repeat(2, 1fr); }
   .plan-flat.plan-popular { transform: none; }
   .plan-flat.plan-popular:hover { transform: translateY(-4px); }
   .features-grid { grid-template-columns: repeat(2, 1fr); }
@@ -315,7 +307,7 @@ footer { border-top: 1px solid var(--border); padding: 48px 24px; max-width: 120
   .footer-links { justify-content: center; }
 }
 @media (max-width: 650px) {
-  .plans-flat { grid-template-columns: 1fr; }
+  .plans-flat { grid-template-columns: 1fr; max-width: 100%; }
   .plan-flat.plan-popular { transform: none; }
   .features-grid { grid-template-columns: 1fr; }
   .steps-row { grid-template-columns: 1fr; }
@@ -658,7 +650,7 @@ footer { border-top: 1px solid var(--border); padding: 48px 24px; max-width: 120
       <div class="plan-flat">
         <div class="plan-name">Monthly</div>
         <div class="plan-price-block">
-          <span class="plan-currency">₹</span><span class="plan-amount">199</span>
+          <span class="plan-currency">₹</span><span class="plan-amount">249</span>
         </div>
         <div class="plan-cycle">/ month &nbsp;·&nbsp; Cancel anytime</div>
         <div class="plan-period">Flexibility first — no commitment</div>
@@ -684,11 +676,11 @@ footer { border-top: 1px solid var(--border); padding: 48px 24px; max-width: 120
         <div class="popular-badge">🌟 Most Popular</div>
         <div class="plan-name">Yearly</div>
         <div class="plan-price-block">
-          <span class="plan-currency">₹</span><span class="plan-amount emerald">1,499</span>
+          <span class="plan-currency">₹</span><span class="plan-amount emerald">1,999</span>
         </div>
-        <div class="plan-cycle">/ year &nbsp;·&nbsp; ₹125 / month effective</div>
-        <div class="plan-original">~~₹2,388 / year~~</div>
-        <div class="plan-saving">🎉 Save ₹889 — 37% off</div>
+        <div class="plan-cycle">/ year &nbsp;·&nbsp; ₹166 / month effective</div>
+        <div class="plan-original">~~₹2,988 / year~~</div>
+        <div class="plan-saving">🎉 Save ₹989 — 33% off</div>
         <div class="plan-period">2 months practically free</div>
         <div class="plan-divider"></div>
         <ul class="plan-feats-flat">
@@ -700,26 +692,6 @@ footer { border-top: 1px solid var(--border); padding: 48px 24px; max-width: 120
         <a href="#waitlist" class="plan-cta-flat cta-yearly">Join Waitlist →</a>
       </div>
 
-      <!-- Lifetime -->
-      <div class="plan-flat plan-lifetime">
-        <div class="plan-name">Lifetime 🔥</div>
-        <div class="plan-price-block">
-          <span class="plan-currency" style="color:var(--gold-l)">₹</span><span class="plan-amount gold">4,999</span>
-        </div>
-        <div class="plan-cycle">/ one-time &nbsp;·&nbsp; No renewal ever</div>
-        <div class="plan-saving gold-save">⚡ Launch offer — Limited time only</div>
-        <div class="plan-period">Zindagi bhar tension-free</div>
-        <div class="plan-divider"></div>
-        <ul class="plan-feats-flat">
-          <li>Everything — unlimited forever</li>
-          <li>All future features included</li>
-          <li>Business Health Dashboard (coming)</li>
-          <li>Founding member badge</li>
-          <li>Priority support — lifetime</li>
-          <li>Lock in today's price permanently</li>
-        </ul>
-        <a href="#waitlist" class="plan-cta-flat cta-lifetime">Join Waitlist →</a>
-      </div>
 
     </div>
 
@@ -728,7 +700,7 @@ footer { border-top: 1px solid var(--border); padding: 48px 24px; max-width: 120
       <div class="ftn-icon">🆓</div>
       <div>
         <div class="ftn-title">Free Tier — Always Available</div>
-        <div class="ftn-desc">14 days full trial — no credit card required. After trial: 5 bill scans/month + 20 voice entries/month + unlimited payment auto-detection + basic reports — forever free.</div>
+        <div class="ftn-desc">7 days full trial — no credit card required. After trial: 5 bill scans/month + 20 voice entries/month + unlimited payment auto-detection + basic reports — forever free.</div>
       </div>
     </div>
   </div>
@@ -781,13 +753,7 @@ footer { border-top: 1px solid var(--border); padding: 48px 24px; max-width: 120
       <div class="faq-a"><p>Nahi. ArvoLens SMS access nahi karta — sirf notification access use karta hai. Ye Play Store guidelines ke according hai aur tumhara data zyada safe rehta hai. Bank notifications se automatically transactions detect hoti hain — bina kisi SMS permission ke.</p></div>
     </div>
 
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">
-        Lifetime plan kab tak available rahega?
-        <span class="faq-arrow">+</span>
-      </div>
-      <div class="faq-a"><p>Lifetime plan sirf launch offer hai — limited time ke liye available hai. App launch ke baad ye plan hata liya jaayega. Jo log waitlist mein hain unhe pehle access milega aur launch offer ka fayda milega. Abhi join karo — baad mein sirf monthly ya yearly option hoga.</p></div>
-    </div>
+    
 
     <div class="faq-item">
       <div class="faq-q" onclick="toggleFaq(this)">
@@ -813,7 +779,7 @@ footer { border-top: 1px solid var(--border); padding: 48px 24px; max-width: 120
   <div class="waitlist-inner">
     <div class="section-label reveal" style="justify-content:center; margin-bottom:24px;">Early Access</div>
     <h2 class="waitlist-title reveal">Pehle launch pe<br><em>sab se pehle</em> pao.</h2>
-    <p class="waitlist-sub reveal">Waitlist join karo — launch ke din seedha inbox mein aayega. Early users ko <strong>lifetime plan par special pricing</strong> milegi. 🎁</p>
+    <p class="waitlist-sub reveal">Waitlist join karo — launch ke din seedha inbox mein aayega. Early users ko <strong>special early-bird pricing</strong> milegi. 🎁</p>
 
     <div class="waitlist-form-block reveal">
       <div id="form-container">
